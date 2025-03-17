@@ -21,9 +21,9 @@ export default [
       'no-undef': 'error',
       'no-const-assign': 'error',
       'no-duplicate-imports': 'error',
-      'eqeqeq': ['error', 'always'], // Используйте строгое равенство
-      'prefer-const': 'warn', // Рекомендуйте использовать const
-      'curly': 'error', // Обязательные фигурные скобки
+      'eqeqeq': ['error', 'always'], // Использует строгое равенство
+      'prefer-const': 'warn', // Рекомендует использовать const
+      'curly': 'error', // Обязательны фигурные скобки
       'no-console': 'warn', // Предупреждение о использовании console.log
       'consistent-return': 'error', // Консистентный возврат из функций
     },

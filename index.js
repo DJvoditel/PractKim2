@@ -25,6 +25,7 @@ const User = sequelize.define("users", {
 
 app.use(cors());
 app.use(express.json());
+
 app.get("/main", (req, res) => {
     res.send("<h1>Hello world!</h1>");
 });
@@ -33,11 +34,13 @@ app.get("/getUser/:id_user", async (req, res) => {
     try {
         const data = req.params;
         const user = await User.findOne({ where: { id_user: data.id_user } });
-        if (!user) return res.json("Запись не найдена!");
-        res.json(user);
+        if (!user) {
+            return res.json("Запись не найдена!"); 
+        }
+        return res.json(user); 
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Ошибка" });
+        console.error(error); 
+        return res.status(500).json({ message: "Ошибка" }); 
     }
 });
 
@@ -45,20 +48,20 @@ app.post("/insertUser", async (req, res) => {
     try {
         const data = req.body;
         const newUser = await User.create({ surname: data.surname, number_group: data.number_group });
-        res.json({ message: "Запись создана!", user: newUser });
+        return res.json({ message: "Запись создана!", user: newUser }); // добавлен return
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Ошибка" });
+        console.error(error); // заменено на console.error
+        return res.status(500).json({ message: "Ошибка" }); // добавлен return
     }
 });
 
 app.delete("/deleteAll", async (req, res) => {
     try {
         await User.destroy({ where: {} });
-        res.json({ message: "Все записи удалены!" });
+        return res.json({ message: "Все записи удалены!" }); // добавлен return
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Ошибка" });
+        console.error(error); // заменено на console.error
+        return res.status(500).json({ message: "Ошибка" }); // добавлен return
     }
 });
 
@@ -66,11 +69,13 @@ app.delete("/deleteId/:id_user", async (req, res) => {
     try {
         const data = req.params;
         const deleteUser = await User.destroy({ where: { id_user: data.id_user } });
-        if (deleteUser === 0) return res.json(`Запись с ID=${data.id_user} не найдена!`);
-        res.json({ message: `Запись по ID=${data.id_user} удалена` });
+        if (deleteUser === 0) {
+            return res.json(`Запись с ID=${data.id_user} не найдена!`); // добавлены фигурные скобки
+        }
+        return res.json({ message: `Запись по ID=${data.id_user} удалена `}); // добавлен return
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Ошибка" });
+        console.error(error); // заменено на console.error
+        return res.status(500).json({ message: "Ошибка" }); // добавлен return
     }
 });
 
