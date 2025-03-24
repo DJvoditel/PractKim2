@@ -1,94 +1,113 @@
 const express = require("express");
 require("dotenv").config();
-const app = express();
 const cors = require("cors");
-const { Sequelize } = require("sequelize");
-const { DataTypes } = require("sequelize");
+const { Sequelize, DataTypes } = require("sequelize");
+
+const app = express();
 const PORT = process.env.PORT || 8080;
 
+// Константы для статусов
+const HTTP_STATUS_OK = 200;
+const HTTP_STATUS_CREATED = 201;
+const HTTP_STATUS_NOT_FOUND = 404;
+const HTTP_STATUS_ERROR = 500;
+
+// Конфигурация Sequelize
 const sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASSWORD,
-    {
-        dialect: 'postgres',
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT
-    }
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
+  {
+    dialect: 'postgres',
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+  }
 );
 
+// Определение модели User
 const User = sequelize.define("users", {
-    id_user: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    surname: { type: DataTypes.STRING },
-    number_group: { type: DataTypes.STRING }
+  idUser: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  surname: { type: DataTypes.STRING },
+  numberGroup: { type: DataTypes.STRING },
 }, { timestamps: false });
 
 app.use(cors());
 app.use(express.json());
 
+// Маршрут для главной страницы
 app.get("/main", (req, res) => {
-    res.send("<h1>Hello world!</h1>");
+  res.send("<h1>Hello world!</h1>");
 });
 
-app.get("/getUser/:id_user", async (req, res) => {
-    try {
-        const data = req.params;
-        const user = await User.findOne({ where: { id_user: data.id_user } });
-        if (!user) {
-            return res.json("Запись не найдена!"); 
-        }
-        return res.json(user); 
-    } catch (error) {
-        console.error(error); 
-        return res.status(500).json({ message: "Ошибка" }); 
+// Получение пользователя по ID
+app.get("/getUser/:idUser", async (req, res) => {
+  try {
+    const { idUser } = req.params;
+    const user = await User.findOne({ where: { idUser } });
+    if (!user) {
+      return res.status(HTTP_STATUS_NOT_FOUND)
+        .json({ message: "Запись не найдена!" });
     }
+    return res.json(user);
+  } catch (error) {
+    return res.status(HTTP_STATUS_ERROR)
+      .json({ message: "Ошибка" });
+  }
 });
 
+// Вставка нового пользователя
 app.post("/insertUser", async (req, res) => {
-    try {
-        const data = req.body;
-        const newUser = await User.create({ surname: data.surname, number_group: data.number_group });
-        return res.json({ message: "Запись создана!", user: newUser }); // добавлен return
-    } catch (error) {
-        console.error(error); // заменено на console.error
-        return res.status(500).json({ message: "Ошибка" }); // добавлен return
-    }
+  try {
+    const { surname, numberGroup } = req.body;
+    const newUser = await User.create({ surname, numberGroup });
+    return res.status(HTTP_STATUS_CREATED)
+      .json({ message: "Запись создана!", user: newUser });
+  } catch (error) {
+    return res.status(HTTP_STATUS_ERROR)
+      .json({ message: "Ошибка" });
+  }
 });
 
+// Удаление всех пользователей
 app.delete("/deleteAll", async (req, res) => {
-    try {
-        await User.destroy({ where: {} });
-        return res.json({ message: "Все записи удалены!" }); // добавлен return
-    } catch (error) {
-        console.error(error); // заменено на console.error
-        return res.status(500).json({ message: "Ошибка" }); // добавлен return
-    }
+  try {
+    await User.destroy({ where: {} });
+    return res.json({ message: "Все записи удалены!" });
+  } catch (error) {
+    return res.status(HTTP_STATUS_ERROR)
+      .json({ message: "Ошибка" });
+  }
 });
 
-app.delete("/deleteId/:id_user", async (req, res) => {
-    try {
-        const data = req.params;
-        const deleteUser = await User.destroy({ where: { id_user: data.id_user } });
-        if (deleteUser === 0) {
-            return res.json(`Запись с ID=${data.id_user} не найдена!`); // добавлены фигурные скобки
-        }
-        return res.json({ message: `Запись по ID=${data.id_user} удалена `}); // добавлен return
-    } catch (error) {
-        console.error(error); // заменено на console.error
-        return res.status(500).json({ message: "Ошибка" }); // добавлен return
+// Удаление пользователя по ID
+app.delete("/deleteId/:idUser", async (req, res) => {
+  try {
+    const { idUser } = req.params;
+    const deleteUser = await User.destroy({ where: { idUser } });
+    if (deleteUser === 0) {
+      return res.status(HTTP_STATUS_NOT_FOUND).json({
+        message: 'Запись с ID=${idUser} не найдена!'
+      });
     }
+    return res.json({ message: 'Запись по ID=${idUser} удалена' });
+  } catch (error) {
+    return res.status(HTTP_STATUS_ERROR)
+      .json({ message: "Ошибка" });
+  }
 });
 
+// Функция для запуска сервера
 async function start() {
-    try {
-        await sequelize.authenticate();
-        await sequelize.sync();
-        app.listen(PORT, () => {
-            console.log(`Сервер работает на порту ${PORT}`);
-        });
-    } catch (error) {
-        console.error("Не удалось подключиться к базе данных:", error);
-    }
+  try {
+    await sequelize.authenticate();
+    await sequelize.sync();
+    app.listen(PORT, () => {
+      console.log('Сервер работает на порту ${PORT}');
+    });
+  } catch (error) {
+    console.error("Не удалось подключиться к базе данных:", error);
+  }
 }
 
+// Запуск приложения
 start();
